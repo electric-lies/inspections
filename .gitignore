@@ -1,0 +1,4 @@
+__pycache__
+docs/*
+commands.md
+check.py
