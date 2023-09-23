@@ -1,9 +1,10 @@
 import logging
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, RedirectResponse
-from pydantic import BaseModel, ValidationError
+from pydantic import AliasPath, BaseModel, Field, ValidationError
 import requests
 import os
+
 
 class Update(BaseModel):
     table_id: int
@@ -12,25 +13,23 @@ class Update(BaseModel):
     items: list[dict]
 
 
-class ProjectRecord(BaseModel):
-    id: int
-
-
 app = FastAPI()
 
-IP = os.environ.get("OWN_IP", "localhost") # env var in prod, localhost in dev
+IP = os.environ.get("OWN_IP", "localhost")  # env var in prod, localhost in dev
 if IP == "localhost":
     logging.warning('"OWN_IP" env var is missing, running in dev mode')
 # Baserow
-TOKEN = os.environ["BASEROW_TOKEN"] # TODO: find solution for dev
+TOKEN = os.environ["BASEROW_TOKEN"]  # TODO: find solution for dev
 DB_ID = 2
 PROJECT_TABLE_ID = 8
-BASEROW_IP = os.environ.get("BASEROW_IP", "localhost") # env var in prod, localhost in dev 
+BASEROW_IP = os.environ.get(
+    "BASEROW_IP", "localhost"
+)  # env var in prod, localhost in dev
 if IP == "localhost":
     logging.warning('"BASEROW_IP" env var is missing, running in dev mode')
 
 # Documint
-DOC_TOKEN =TOKEN = os.environ["DOCUMINT_TOKEN"]
+DOC_TOKEN = TOKEN = os.environ["DOCUMINT_TOKEN"]
 TEMPLATE_ID = TOKEN = os.environ["DOCUMINT_TEMPLATE_ID"]
 
 logging.basicConfig(
@@ -46,22 +45,7 @@ async def updateController(update: Update):
     return {"message": "got update"}
 
 
-async def get_record(id: int) -> ProjectRecord | None:
-    url = f"http://{BASEROW_IP}/api/database/rows/table/{PROJECT_TABLE_ID}/{id}/?user_field_names=true"
-    res = requests.get(
-       url,
-        headers={"Authorization": f"Token {TOKEN}"},
-    )
-    try:
-        record = ProjectRecord.model_validate_json(res.text)
-    except ValidationError as err:
-        logging.error(f"Error during Baserow response parsing from GET {url} with {res.text=}", err)
-        return None
-
-    return record
-
-
-async def generate_preview(record: ProjectRecord):
+async def generate_preview(record: SurveyRecord):
     # get_template_for_backup_url = (
     #     f"https://api.documint.me/1/templates/{TEMPLATE_ID}?select"
     # )
