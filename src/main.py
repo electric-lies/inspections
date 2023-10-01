@@ -1,11 +1,12 @@
 import logging
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, RedirectResponse
-from pydantic import AliasPath, BaseModel, Field, ValidationError
+from pydantic import BaseModel
 import requests
 import os
 from baserow_models import Survey
 from baserow import Baserow, BaserowIDs
+from documint import Documint
 
 
 class Update(BaseModel):
@@ -23,19 +24,22 @@ if IP == "localhost":
 # Baserow
 TOKEN = os.environ["BASEROW_TOKEN"]  # TODO: find solution for dev
 DB_ID = 2
-PROJECT_TABLE_ID = 8
 BASEROW_IP = os.environ.get(
     "BASEROW_IP", "localhost"
 )  # env var in prod, localhost in dev
 if IP == "localhost":
     logging.warning('"BASEROW_IP" env var is missing, running in dev mode')
 
-ids = BaserowIDs()
-b = Baserow()
+ids = BaserowIDs(8, 4, 9)
+
+b = Baserow(token=TOKEN, db_id=DB_ID, ids=ids, ip=IP)
+
 
 # Documint
 DOC_TOKEN = TOKEN = os.environ["DOCUMINT_TOKEN"]
 TEMPLATE_ID = TOKEN = os.environ["DOCUMINT_TEMPLATE_ID"]
+
+d = Documint(DOC_TOKEN, TEMPLATE_ID)
 
 logging.basicConfig(
     format="%(asctime)s %(levelname)-8s %(message)s",
@@ -49,34 +53,21 @@ async def updateController(update: Update):
     logging.warning(update.model_dump_json())
     return {"message": "got update"}
 
+
 @app.get("/duplicate/{row_id}")
 async def duplicate(row_id):
     new_row_id = b.duplicate_record(row_id)
-    return RedirectResponse(f"http://{IP}/database/{DB_ID}/table/{ids.survey_table_id}/row/{new_row_id}")
-
-async def generate_preview(record: Survey):
-    # get_template_for_backup_url = (
-    #     f"https://api.documint.me/1/templates/{TEMPLATE_ID}?select"
-    # )
-    merge_url = f"https://api.documint.me/1/templates/{TEMPLATE_ID}/content?preview=true&active=true"
-
-    payload = {"company": record.id}
-    headers = {"api_key": DOC_TOKEN}
-
-    response = requests.request("POST", merge_url, headers=headers, data=payload)
-    if response.status_code != 200:
-        print(response.text)
-        return f"{IP}/broken_preview"
-    return response.json()["url"]
+    return RedirectResponse(
+        f"http://{IP}/database/{DB_ID}/table/{ids.survey_table_id}/row/{new_row_id}"
+    )
 
 
 @app.get("/preview/{row_id}")
 async def preview(row_id):
-    record = await b.get_record(row_id)
-    if record is None:
-        return RedirectResponse(f"{IP}/broken_preview")
-    url = await generate_preview(record)
-    return RedirectResponse(url)
+    try:
+        return RedirectResponse(await d.generate_preview(await b.get_record(row_id)))
+    except Exception:
+        return RedirectResponse("{IP}/broken_preview")
 
 
 @app.get("/broken_preview")
@@ -87,16 +78,17 @@ async def broken_preview():
             <title>Oops!</title>
         </head>
         <body>
-            <h1>Preview run into some problem, call illay, he will sort it out</h1>
+            <h1>Preview run into some problem, call illay, he will sort it out :)</h1>
         </body>
     </html>"""
     )
 
 
+# depricated
 @app.get("/button/{row_id}")
 async def root(row_id):
     res = requests.patch(
-        f"http://{BASEROW_IP}/api/database/rows/table/{PROJECT_TABLE_ID}/{row_id}/?user_field_names=true",
+        f"http://{BASEROW_IP}/api/database/rows/table/{id.table_id}/{row_id}/?user_field_names=true",
         headers={"Authorization": f"Token {TOKEN}", "Content-Type": "application/json"},
         json={"Name": "auto", "Last name": "change", "Notes": "here", "Active": True},
     )

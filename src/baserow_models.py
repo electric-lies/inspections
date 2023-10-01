@@ -2,10 +2,12 @@ from dataclasses import dataclass
 from typing import List
 from pydantic import AliasPath, BaseModel, Field
 
+
 class SurveyStatus:
     CLOSED = 3
     ARCHIVE = 4
     OPEN = 5
+
 
 class BaseRecord(BaseModel):
     id: int

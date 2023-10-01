@@ -5,7 +5,10 @@ import requests
 from pydantic import ValidationError
 import aiohttp
 
-logging.basicConfig(format="[%(asctime)s]/%(levelname)s - %(message)s",level=logging.DEBUG)
+logging.basicConfig(
+    format="[%(asctime)s]/%(levelname)s - %(message)s", level=logging.DEBUG
+)
+
 
 @dataclass()
 class BaserowIDs:
@@ -44,15 +47,15 @@ class Baserow:
                 self._url(self.survey_table, record_id)
             ) as get_response:
                 record = SurveyRecord.model_validate_json(await get_response.text())
-                #new_record = {key: res[key]['id'] for key in ['תוקף','איש קשר','בוחן','סוג בדיקה','מכונת הרמה','ליקויים']}
+                # new_record = {key: res[key]['id'] for key in ['תוקף','איש קשר','בוחן','סוג בדיקה','מכונת הרמה','ליקויים']}
                 new_record = {
-                        'תוקף': 'פתוח',
-                        'איש קשר': [record.contact.name],
-                        'בוחן': [record.inspector.name],
-                        'סוג בדיקה': record.type.name,
-                        'מכונת הרמה': [record.machine.name]
-                        }
-                
+                    "תוקף": "פתוח",
+                    "איש קשר": [record.contact.name],
+                    "בוחן": [record.inspector.name],
+                    "סוג בדיקה": record.type.name,
+                    "מכונת הרמה": [record.machine.name],
+                }
+
             async with session.post(
                 self._url(self.survey_table), data=new_record
             ) as set_response:
@@ -65,9 +68,9 @@ class Baserow:
                     raise Exception("Duplication failed")
                 else:
                     logging.info(f"Survey record {record_id} duplicated")
-                    return (await set_response.json())['id']
+                    return (await set_response.json())["id"]
 
-    async def get_record(self, record_id: int) -> Survey | None:
+    async def get_record(self, record_id: int) -> Survey:
         url = self._url(self.survey_table, record_id)
         res = requests.get(
             url,
@@ -80,7 +83,7 @@ class Baserow:
                 f"Error during Baserow response parsing from GET {url} with {res.text=}",
                 err,
             )
-            return None
+            raise Exception("Failed to fetch survey record")
 
         survey = await self._complete_record(record)
 
@@ -107,7 +110,7 @@ class Baserow:
         except ValidationError as err:
             url = (self._url(self.machine_table, mid),)
             logging.error(
-                    f"Error during Baserow response parsing from GET {url} with {res=}", #type: ignore
+                f"Error during Baserow response parsing from GET {url} with {res=}",  # type: ignore
                 err,
             )
             raise Exception("Getting machine from baserow failed")
