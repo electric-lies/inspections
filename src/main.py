@@ -4,7 +4,6 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel
 import requests
 import os
-from baserow_models import Survey
 from baserow import Baserow, BaserowIDs
 from documint import Documint
 
@@ -32,7 +31,7 @@ if IP == "localhost":
 
 ids = BaserowIDs(8, 4, 9)
 
-b = Baserow(token=TOKEN, db_id=DB_ID, ids=ids, ip=IP)
+b = Baserow(token=TOKEN, db_id=DB_ID, ids=ids, ip=BASEROW_IP)
 
 
 # Documint
@@ -55,10 +54,10 @@ async def updateController(update: Update):
 
 
 @app.get("/duplicate/{row_id}")
-async def duplicate(row_id):
-    new_row_id = b.duplicate_record(row_id)
+async def duplicate(row_id: int):
+    new_row_id = await b.duplicate_record(row_id)
     return RedirectResponse(
-        f"http://{IP}/database/{DB_ID}/table/{ids.survey_table_id}/row/{new_row_id}"
+        f"http://{BASEROW_IP}/database/{DB_ID}/table/{ids.survey_table_id}/row/{new_row_id}"
     )
 
 

@@ -1,4 +1,4 @@
-FROM python:3.10
+FROM python:3.11-alpine
 
 WORKDIR /code
 
@@ -8,6 +8,8 @@ RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
 
 COPY src/* /code/app/
 
+WORKDIR /code/app
+
 EXPOSE 443
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "443"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "443"]

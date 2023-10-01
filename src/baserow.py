@@ -39,14 +39,22 @@ class Baserow:
             rid = ""
         return f"http://{self.ip}/api/database/rows/table/{table}/{rid}?user_field_names=true"
 
-    async def duplicate_record(self, record_id) -> int:
+    async def duplicate_record(self, record_id: int) -> int:
         async with aiohttp.ClientSession(
-            headers={"Authorization": f"Token {self.token}"}
+            headers={"Authorization": f"Token {self.token}"}, 
         ) as session:
             async with session.get(
                 self._url(self.survey_table, record_id)
             ) as get_response:
-                record = SurveyRecord.model_validate_json(await get_response.text())
+                try:
+                   record = SurveyRecord.model_validate_json(await get_response.text())
+                except ValidationError as err:
+                   logging.error(
+                       f"Error during Baserow response parsing from GET {self._url(self.survey_table, record_id)} with result = {await get_response.text()}",
+                      err,
+                   )
+                   raise Exception("Failed to fetch survey record")
+
                 # new_record = {key: res[key]['id'] for key in ['תוקף','איש קשר','בוחן','סוג בדיקה','מכונת הרמה','ליקויים']}
                 new_record = {
                     "תוקף": "פתוח",
