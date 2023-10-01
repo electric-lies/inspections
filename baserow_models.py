@@ -2,6 +2,10 @@ from dataclasses import dataclass
 from typing import List
 from pydantic import AliasPath, BaseModel, Field
 
+class SurveyStatus:
+    CLOSED = 3
+    ARCHIVE = 4
+    OPEN = 5
 
 class BaseRecord(BaseModel):
     id: int
@@ -17,6 +21,14 @@ class SurveyRecord(BaseModel):
     defiencies: List[BaseRecord] = Field(alias="ליקויים")
 
 
+class Machine(BaseModel):
+    id: int
+    description: str  # = Field(alias="תיאור מכונת הרמה")
+    full_description: str = Field(alias="תיאור מפורט")
+    model: str = Field(alias="דגם")
+    producer: str = Field(alias="יצרן")
+
+
 class Contact(BaseModel):
     id: int
     name: str = Field(alias="שם")
@@ -30,3 +42,4 @@ class Contact(BaseModel):
 class Survey:
     id: int
     contact: Contact
+    machine: Machine

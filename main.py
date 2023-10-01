@@ -4,6 +4,8 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import AliasPath, BaseModel, Field, ValidationError
 import requests
 import os
+from baserow_models import Survey
+from baserow import Baserow, BaserowIDs
 
 
 class Update(BaseModel):
@@ -28,6 +30,9 @@ BASEROW_IP = os.environ.get(
 if IP == "localhost":
     logging.warning('"BASEROW_IP" env var is missing, running in dev mode')
 
+ids = BaserowIDs()
+b = Baserow()
+
 # Documint
 DOC_TOKEN = TOKEN = os.environ["DOCUMINT_TOKEN"]
 TEMPLATE_ID = TOKEN = os.environ["DOCUMINT_TEMPLATE_ID"]
@@ -44,8 +49,12 @@ async def updateController(update: Update):
     logging.warning(update.model_dump_json())
     return {"message": "got update"}
 
+@app.get("/duplicate/{row_id}")
+async def duplicate(row_id):
+    new_row_id = b.duplicate_record(row_id)
+    return RedirectResponse(f"http://{IP}/database/{DB_ID}/table/{ids.survey_table_id}/row/{new_row_id}")
 
-async def generate_preview(record: SurveyRecord):
+async def generate_preview(record: Survey):
     # get_template_for_backup_url = (
     #     f"https://api.documint.me/1/templates/{TEMPLATE_ID}?select"
     # )
@@ -63,7 +72,7 @@ async def generate_preview(record: SurveyRecord):
 
 @app.get("/preview/{row_id}")
 async def preview(row_id):
-    record = await get_record(row_id)
+    record = await b.get_record(row_id)
     if record is None:
         return RedirectResponse(f"{IP}/broken_preview")
     url = await generate_preview(record)

@@ -2,3 +2,5 @@ __pycache__
 docs/*
 commands.md
 check.py
+
+test_baserow.py
