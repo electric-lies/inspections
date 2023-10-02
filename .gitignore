@@ -3,4 +3,4 @@ docs/*
 commands.md
 check.py
 
-test_baserow.py
+test*.py

@@ -21,11 +21,14 @@ class Documint:
             ) as response:
                 if response.status != 200:
                     print(response.text)
-                    raise Exception(
-                        "preview failed"
-                    )  # TODO: add catch and route to broke preview page
+                    raise Exception("preview failed")
 
                 return (await response.json())["url"]
 
     def _get_paylodad(self, record: Survey):
-        return {"company": record}
+        return {
+            "survey_num": record.id,
+            "current_test_date": record.survey_data.creation_date,
+            "next_test_date": record.survey_data.next_date,
+            "company": record.contact.cname,
+        }

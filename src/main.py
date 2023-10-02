@@ -4,8 +4,8 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel
 import requests
 import os
-from baserow import Baserow, BaserowIDs
-from documint import Documint
+from .baserow import Baserow, BaserowIDs
+from .documint import Documint
 
 
 class Update(BaseModel):
