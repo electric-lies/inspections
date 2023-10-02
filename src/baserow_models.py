@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import List
-from pydantic import AliasPath, BaseModel, Field, validator
+from pydantic import AliasPath, BaseModel, Field
 
 
 class SurveyStatus:
@@ -18,6 +18,9 @@ class SurveyRecord(BaseModel):
     id: int
     creation_date: str = Field(alias="תאריך יצירה")
     next_date: str = Field(alias="תאריך בדיקה הבאה")
+    previous_test_date: str = Field(alias="תאריך בדיקה קודמת")
+    previous_test_id: str = Field(alias="מספר בדיקה קודמת")
+    previous_test_inspector: str = Field(alias="מבצע בדיקה קודמת")
     contact: BaseRecord = Field(validation_alias=AliasPath("איש קשר", 0))
     inspector: BaseRecord = Field(validation_alias=AliasPath("בוחן", 0))
     type: BaseRecord = Field(alias="סוג בדיקה")
